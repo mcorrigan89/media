@@ -1,0 +1,6 @@
+Dockerfile
+.dockerignore
+tmp
+bin
+.envz
+.env.example
