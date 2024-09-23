@@ -8,7 +8,7 @@ import (
 	"github.com/h2non/bimg"
 )
 
-var maxSize = 4080
+var maxSize = 800
 
 func calculateDimensions(width, height, maxSize int) (int, int) {
 	aspectRatio := float64(width) / float64(height)
