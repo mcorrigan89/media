@@ -65,5 +65,15 @@ func (app *application) processImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(img2)
+	img3, err := bimg.NewImage(img2).Convert(bimg.WEBP)
+
+	if err != nil {
+		app.logger.Err(err).Msg("Failed to convert image")
+		http.Error(w, "Failed to convert image", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/webp")
+
+	w.Write(img3)
 }
