@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"sync"
 
-	"github.com/h2non/bimg"
 	"github.com/mcorrigan89/identity/internal/config"
 	"github.com/mcorrigan89/identity/internal/storage"
 	"github.com/rs/zerolog"
@@ -35,27 +33,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
-
-	buffer, err := bimg.Read("image.jpeg")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-
-	newImage, err := bimg.NewImage(buffer).Resize(800, 600)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-
-	size, err := bimg.NewImage(newImage).Size()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-
-	if size.Width == 800 && size.Height == 600 {
-		fmt.Println("The image size is valid")
-	}
-
-	bimg.Write("new.jpeg", newImage)
 
 	wg := sync.WaitGroup{}
 
