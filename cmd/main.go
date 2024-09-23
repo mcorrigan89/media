@@ -40,18 +40,13 @@ func main() {
 	// services := services.NewServices(&repositories, &cfg, &logger, &wg)
 	// protoServer := api.NewProtoServer(&cfg, &logger, &wg, &services)
 
-	s := storage.StorageService{
-		Endpoint:        cfg.Storage.Endpoint,
-		BucketName:      cfg.Storage.BucketName,
-		AccessKeyID:     cfg.Storage.AccessKeyID,
-		SecretAccessKey: cfg.Storage.SecretAccessKey,
-	}
+	s := storage.NewStorageService(&logger, cfg.Storage.Endpoint, cfg.Storage.BucketName, cfg.Storage.AccessKeyID, cfg.Storage.SecretAccessKey)
 
 	app := &application{
 		wg:      &wg,
 		config:  cfg,
 		logger:  &logger,
-		storage: &s,
+		storage: s,
 		// services:    &services,
 		// protoServer: protoServer,
 	}
