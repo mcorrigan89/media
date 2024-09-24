@@ -1,32 +1,41 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+
+	"github.com/mcorrigan89/media/internal/usercontext"
+	"github.com/rs/xid"
 )
 
 func (app *application) contextBuilder(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// ctx := r.Context()
+		ctx := r.Context()
 
-		// ctx = context.WithValue(ctx, ipKey, r.RemoteAddr)
-		// correlationID := xid.New().String()
-		// ctx = context.WithValue(ctx, correlationIDKey, correlationID)
+		ctx = context.WithValue(ctx, ipKey, r.RemoteAddr)
+		correlationID := xid.New().String()
+		ctx = context.WithValue(ctx, correlationIDKey, correlationID)
 
-		// sessionToken := r.Header.Get("x-session-token")
-		// ctx = context.WithValue(ctx, sessionTokenKey, sessionToken)
+		sessionToken := r.Header.Get("x-session-token")
+		if sessionToken != "" {
+			ctx = context.WithValue(ctx, sessionTokenKey, sessionToken)
 
-		// ctx = app.logger.WithContext(ctx)
+			ctx = app.logger.WithContext(ctx)
 
-		// user, session, err := app.services.UserService.GetUserBySessionToken(ctx, sessionToken)
-		// ctx = usercontext.ContextSetSession(ctx, session)
-		// if err == nil && !session.IsExpired() {
-		// 	ctx = usercontext.ContextSetUser(ctx, user)
-		// }
+			ctx = usercontext.ContextSetSession(ctx, sessionToken)
 
-		// r = r.WithContext(ctx)
+			user, err := app.serviceApiClients.Identity.GetUserBySessionToken(ctx, sessionToken)
+			if err != nil {
+				app.logger.Err(err).Ctx(ctx).Msg("Error getting user by session token")
+			} else {
+				ctx = usercontext.ContextSetUser(ctx, user)
+			}
+
+		}
+		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})

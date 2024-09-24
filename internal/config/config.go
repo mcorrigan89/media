@@ -19,6 +19,11 @@ type Config struct {
 	Cors     struct {
 		TrustedOrigins []string
 	}
+	ServiceApis struct {
+		Idenitity struct {
+			URL string
+		}
+	}
 	Storage struct {
 		Endpoint        string
 		BucketName      string
@@ -67,6 +72,13 @@ func LoadConfig(cfg *Config) {
 	cfg.DB.DSN = postgres_url
 
 	cfg.Cors.TrustedOrigins = []string{"http://localhost:3000"}
+
+	identity_url := os.Getenv("IDENTITY_URL")
+	if identity_url == "" {
+		log.Fatalf("IDENTITY_URL not available in .env")
+	}
+
+	cfg.ServiceApis.Idenitity.URL = identity_url
 
 	// Load STORAGE
 	storage_endpoint := os.Getenv("STORAGE_ENDPOINT")
