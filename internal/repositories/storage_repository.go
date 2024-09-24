@@ -50,7 +50,7 @@ func (s *StorageRepository) GetObject(ctx context.Context, objectKey string) ([]
 	return respByte, nil
 }
 
-func (s *StorageRepository) UploadObject(ctx context.Context, objectKey string, object io.Reader, size int64) error {
+func (s *StorageRepository) UploadObject(ctx context.Context, objectKey string, object io.Reader, size int64) (*string, error) {
 	var useSSL = true
 
 	minioClient, err := minio.New(s.utils.config.Storage.Endpoint, &minio.Options{
@@ -59,7 +59,7 @@ func (s *StorageRepository) UploadObject(ctx context.Context, objectKey string, 
 	})
 	if err != nil {
 		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to create minio client")
-		return err
+		return nil, err
 	}
 
 	uniqueId := xid.New().String()
@@ -68,8 +68,8 @@ func (s *StorageRepository) UploadObject(ctx context.Context, objectKey string, 
 	_, err = minioClient.PutObject(ctx, s.utils.config.Storage.BucketName, uniqueObjectKey, object, size, minio.PutObjectOptions{})
 	if err != nil {
 		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to get object from storage")
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &uniqueId, nil
 }

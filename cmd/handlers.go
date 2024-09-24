@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -45,12 +46,12 @@ func (app *application) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	err = app.services.StorageService.UploadObject(ctx, handler.Filename, file, handler.Size)
+	assetId, err := app.services.StorageService.UploadObject(ctx, handler.Filename, file, handler.Size)
 	if err != nil {
 		app.logger.Err(err).Msg("Failed to upload object to storage")
 		http.Error(w, "Failed to upload object to storage", http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte("Successfully uploaded"))
+	w.Write([]byte(fmt.Sprintf("{\"assetId\": \"%s\"}", *assetId)))
 }

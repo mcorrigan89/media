@@ -31,14 +31,14 @@ func (s *StorageService) GetObject(ctx context.Context, objectKey string) ([]byt
 	return imageBytes, nil
 }
 
-func (s *StorageService) UploadObject(ctx context.Context, objectKey string, object io.Reader, size int64) error {
+func (s *StorageService) UploadObject(ctx context.Context, objectKey string, object io.Reader, size int64) (*string, error) {
 	s.utils.logger.Info().Ctx(ctx).Str("objectKey", objectKey).Msg("Uploading object to storage")
 
-	err := s.storageRepository.UploadObject(ctx, objectKey, object, size)
+	assetId, err := s.storageRepository.UploadObject(ctx, objectKey, object, size)
 	if err != nil {
 		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to upload object to storage")
-		return err
+		return nil, err
 	}
 
-	return nil
+	return assetId, nil
 }
