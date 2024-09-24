@@ -4,17 +4,18 @@ import (
 	"os"
 	"sync"
 
-	"github.com/mcorrigan89/identity/internal/config"
-	"github.com/mcorrigan89/identity/internal/storage"
+	"github.com/mcorrigan89/media/internal/config"
+	"github.com/mcorrigan89/media/internal/repositories"
+	"github.com/mcorrigan89/media/internal/services"
+
 	"github.com/rs/zerolog"
 )
 
 type application struct {
-	config  config.Config
-	wg      *sync.WaitGroup
-	logger  *zerolog.Logger
-	storage *storage.StorageService
-	// services    *services.Services
+	config   config.Config
+	wg       *sync.WaitGroup
+	logger   *zerolog.Logger
+	services *services.Services
 	// protoServer *api.ProtoServer
 }
 
@@ -36,18 +37,15 @@ func main() {
 
 	wg := sync.WaitGroup{}
 
-	// repositories := repositories.NewRepositories(db, &logger, &wg)
-	// services := services.NewServices(&repositories, &cfg, &logger, &wg)
+	repositories := repositories.NewRepositories(db, &cfg, &logger, &wg)
+	services := services.NewServices(&repositories, &cfg, &logger, &wg)
 	// protoServer := api.NewProtoServer(&cfg, &logger, &wg, &services)
 
-	s := storage.NewStorageService(&logger, cfg.Storage.Endpoint, cfg.Storage.BucketName, cfg.Storage.AccessKeyID, cfg.Storage.SecretAccessKey)
-
 	app := &application{
-		wg:      &wg,
-		config:  cfg,
-		logger:  &logger,
-		storage: s,
-		// services:    &services,
+		wg:       &wg,
+		config:   cfg,
+		logger:   &logger,
+		services: &services,
 		// protoServer: protoServer,
 	}
 

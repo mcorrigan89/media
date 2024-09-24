@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
-	"github.com/mcorrigan89/identity/internal/config"
+	"github.com/mcorrigan89/media/internal/config"
 )
 
 func configDB(cfg *config.Config) *pgxpool.Config {

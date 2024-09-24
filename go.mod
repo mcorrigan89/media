@@ -1,4 +1,4 @@
-module github.com/mcorrigan89/identity
+module github.com/mcorrigan89/media
 
 go 1.22.0
 

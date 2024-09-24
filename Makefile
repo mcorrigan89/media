@@ -19,7 +19,7 @@ codegen:
 
 .PHONY: models
 models:
-	pg_dump --schema-only identity > schema.sql
+	pg_dump --schema-only media > schema.sql
 	sqlc generate
 
 .PHONY: migrate-create
