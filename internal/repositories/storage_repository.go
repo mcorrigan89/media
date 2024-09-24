@@ -2,10 +2,12 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rs/xid"
 )
 
 type StorageRepository struct {
@@ -60,7 +62,10 @@ func (s *StorageRepository) UploadObject(ctx context.Context, objectKey string, 
 		return err
 	}
 
-	_, err = minioClient.PutObject(ctx, s.utils.config.Storage.BucketName, objectKey, object, size, minio.PutObjectOptions{})
+	uniqueId := xid.New().String()
+	uniqueObjectKey := fmt.Sprintf("%s-%s", uniqueId, objectKey)
+
+	_, err = minioClient.PutObject(ctx, s.utils.config.Storage.BucketName, uniqueObjectKey, object, size, minio.PutObjectOptions{})
 	if err != nil {
 		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to get object from storage")
 		return err
