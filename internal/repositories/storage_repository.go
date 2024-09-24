@@ -71,5 +71,5 @@ func (s *StorageRepository) UploadObject(ctx context.Context, objectKey string, 
 		return nil, err
 	}
 
-	return &uniqueId, nil
+	return &uniqueObjectKey, nil
 }
