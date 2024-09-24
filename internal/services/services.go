@@ -28,7 +28,7 @@ func NewServices(repositories *repositories.Repositories, cfg *config.Config, lo
 	}
 
 	storageService := NewStorageService(&utils, repositories.StorageRepository)
-	photoService := NewPhotoService(&utils)
+	photoService := NewPhotoService(&utils, repositories, storageService)
 
 	return Services{
 		utils:          &utils,

@@ -1,8 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
+
+	"github.com/mcorrigan89/media/internal/services"
 )
 
 func (app *application) processImage(w http.ResponseWriter, r *http.Request) {
@@ -33,9 +35,9 @@ func (app *application) processImage(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) uploadImage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	app.logger.Info().Ctx(ctx).Msg("/v1/upload")
+	app.logger.Info().Ctx(ctx).Msg("/v1/upload-image")
 
-	r.ParseMultipartForm(200 << 20)
+	r.ParseMultipartForm(50 << 20)
 
 	file, handler, err := r.FormFile("image")
 	if err != nil {
@@ -46,14 +48,33 @@ func (app *application) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	assetId, err := app.services.StorageService.UploadObject(ctx, handler.Filename, file, handler.Size)
+	photo, err := app.services.PhotoService.CreatePhoto(ctx, services.CreatePhotoArgs{
+		Filename: handler.Filename,
+		File:     file,
+		Size:     handler.Size,
+	})
 	if err != nil {
-		app.logger.Err(err).Msg("Failed to upload object to storage")
-		http.Error(w, "Failed to upload object to storage", http.StatusInternalServerError)
+		app.logger.Err(err).Ctx(ctx).Msg("Failed to create photo")
+		http.Error(w, "Failed to create photo", http.StatusInternalServerError)
+		return
+	}
+
+	type imageJson struct {
+		ID   string `json:"id"`
+		Slug string `json:"slug"`
+	}
+
+	json, err := json.Marshal(imageJson{
+		ID:   photo.ID.String(),
+		Slug: photo.UrlSlug(),
+	})
+	if err != nil {
+		app.logger.Err(err).Ctx(ctx).Msg("Failed to marshal json")
+		http.Error(w, "Failed to marshal json", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(fmt.Sprintf("{\"assetId\": \"%s\"}", *assetId)))
+	w.Write(json)
 }

@@ -16,7 +16,7 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("/ping", app.ping)
 	mux.HandleFunc("/v1/image/{filename}", app.processImage)
-	mux.HandleFunc("/v1/upload", app.uploadImage)
+	mux.HandleFunc("/v1/upload-image", app.uploadImage)
 	// app.protoServer.Handle(mux)
 
 	return app.recoverPanic(app.enabledCORS(app.contextBuilder(mux)))

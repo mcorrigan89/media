@@ -2,9 +2,14 @@ package services
 
 import (
 	"context"
+	"io"
 	"math"
 
+	"github.com/google/uuid"
 	"github.com/h2non/bimg"
+
+	"github.com/mcorrigan89/media/internal/entities"
+	"github.com/mcorrigan89/media/internal/repositories"
 )
 
 var renditionSizes = map[string]int{
@@ -15,12 +20,16 @@ var renditionSizes = map[string]int{
 }
 
 type PhotoService struct {
-	utils *ServicesUtils
+	utils           *ServicesUtils
+	photoRepository *repositories.PhotoRepository
+	storageService  *StorageService
 }
 
-func NewPhotoService(utils *ServicesUtils) *PhotoService {
+func NewPhotoService(utils *ServicesUtils, repositores *repositories.Repositories, storageService *StorageService) *PhotoService {
 	return &PhotoService{
-		utils: utils,
+		utils:           utils,
+		photoRepository: repositores.PhotoRepository,
+		storageService:  storageService,
 	}
 }
 
@@ -46,7 +55,7 @@ func (s *PhotoService) ProcessImage(ctx context.Context, imageBytes []byte, rend
 		Type:   bimg.WEBP,
 	})
 	if err != nil {
-		s.utils.logger.Err(err).Msg("Failed to process image")
+		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to process image")
 		return nil, "", err
 	}
 
@@ -67,4 +76,70 @@ func (s *PhotoService) calculateDimensions(width, height, maxSize int) (int, int
 	}
 
 	return newWidth, newHeight
+}
+
+func (s *PhotoService) imageMetadata(ctx context.Context, imageBytes []byte) (*bimg.ImageMetadata, error) {
+	img := bimg.NewImage(imageBytes)
+
+	metadata, err := img.Metadata()
+	if err != nil {
+		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to get metadata")
+		return nil, err
+	}
+
+	return &metadata, nil
+}
+
+func (s *PhotoService) GetPhotoByID(ctx context.Context, id uuid.UUID) (*entities.Photo, error) {
+	s.utils.logger.Info().Ctx(ctx).Msg("Get photo by ID")
+
+	photo, err := s.photoRepository.GetPhotoByID(ctx, id)
+	if err != nil {
+		s.utils.logger.Err(err).Msg("Failed to get photo by ID")
+		return nil, err
+	}
+
+	return photo, nil
+}
+
+type CreatePhotoArgs struct {
+	Filename string
+	File     io.Reader
+	Size     int64
+}
+
+func (s *PhotoService) CreatePhoto(ctx context.Context, args CreatePhotoArgs) (*entities.Photo, error) {
+	s.utils.logger.Info().Ctx(ctx).Msg("Create photo")
+
+	assetId, err := s.storageService.UploadObject(ctx, args.Filename, args.File, args.Size)
+	if err != nil {
+		s.utils.logger.Err(err).Msg("Failed to upload object to storage")
+		return nil, err
+	}
+
+	imageBytes, err := io.ReadAll(args.File)
+	if err != nil {
+		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to read image bytes")
+		return nil, err
+	}
+
+	metadata, err := s.imageMetadata(ctx, imageBytes)
+	if err != nil {
+		s.utils.logger.Err(err).Ctx(ctx).Msg("Failed to get image metadata")
+		return nil, err
+	}
+
+	photo, err := s.photoRepository.CreatePhoto(ctx, repositories.CreatePhotoArgs{
+		Bucket:  "images",
+		AssetID: *assetId,
+		Width:   int32(metadata.Size.Width),
+		Height:  int32(metadata.Size.Height),
+		Size:    int32(args.Size),
+	})
+	if err != nil {
+		s.utils.logger.Err(err).Msg("Failed to create photo")
+		return nil, err
+	}
+
+	return photo, nil
 }

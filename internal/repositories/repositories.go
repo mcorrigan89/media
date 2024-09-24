@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mcorrigan89/media/internal/config"
+	"github.com/mcorrigan89/media/internal/repositories/models"
 
 	"github.com/rs/zerolog"
 )
@@ -22,10 +23,12 @@ type ServicesUtils struct {
 type Repositories struct {
 	utils             ServicesUtils
 	StorageRepository *StorageRepository
+	PhotoRepository   *PhotoRepository
 }
 
 func NewRepositories(db *pgxpool.Pool, cfg *config.Config, logger *zerolog.Logger, wg *sync.WaitGroup) Repositories {
 
+	queries := models.New(db)
 	utils := ServicesUtils{
 		logger: logger,
 		config: cfg,
@@ -34,9 +37,11 @@ func NewRepositories(db *pgxpool.Pool, cfg *config.Config, logger *zerolog.Logge
 	}
 
 	storageRepo := NewStorageRepository(&utils)
+	photoRepo := NewPhotoRepository(&utils, db, queries)
 
 	return Repositories{
 		utils:             utils,
 		StorageRepository: storageRepo,
+		PhotoRepository:   photoRepo,
 	}
 }
